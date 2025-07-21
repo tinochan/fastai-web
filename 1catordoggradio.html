@@ -1,0 +1,25 @@
+<input type="file" id="photo">
+<div id="results"></div>
+
+<script type="module">
+  import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
+  const client = await Client.connect("tinochan/animal");
+
+  document.getElementById("photo").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Generate a temporary URL for the uploaded image
+    const imageUrl = URL.createObjectURL(file);
+
+    // Option 1: Send as Blob directly (if Gradio accepts blobs)
+    const result = await client.predict("/predict", [file]); // Array input format
+
+    // Show result
+    console.log(JSON.stringify(result.data, null, 2));
+
+    const label = result.data[0].label;
+    results.innerHTML = `<br/><img src="${imageUrl}" width="300"> <p>${label}</p>`
+  });
+</script>
