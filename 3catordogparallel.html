@@ -1,0 +1,41 @@
+<input type="file" id="photo" multiple>
+<div id="results"></div>
+
+<script type="module">
+  import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
+  const client = await Client.connect("tinochan/animal");
+
+  document.getElementById("photo").addEventListener("change", async (event) => {
+    const files = Array.from(event.target.files);
+    if (!files || files.length === 0) return;
+
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = ""; // Clear previous results
+
+    try {
+      // Use Promise.all to send predictions in parallel
+      const predictions = await Promise.all(
+        files.map(file => client.predict("/predict", [file]))
+      );
+      // Render results after all predictions are done
+      predictions.forEach((result, index) => {
+        // Show result
+        console.log(JSON.stringify(result.data, null, 2));
+        const imageUrl = URL.createObjectURL(files[index]);
+        const label = result.data?.[0]?.label ?? "Unknown";
+
+        const section = document.createElement("div");
+        section.innerHTML = `
+          <br/>
+          <img src="${imageUrl}" width="300" />
+          <p><strong>Prediction:</strong> ${label}</p>
+        `;
+        resultsDiv.appendChild(section);
+      });
+    } catch (err) {
+      console.error("Prediction error:", err);
+      resultsDiv.textContent = "An error occurred while processing your images.";
+    }
+  });
+</script>
